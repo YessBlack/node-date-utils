@@ -1,3 +1,8 @@
+# 🚧 AÚN NO ESTÁ PUBLICADO EN NPM – EN PROGRESO 🚧
+
+---
+
+Este paquete está en desarrollo y aún no ha sido publicado en NPM.
 
 # DateUtils
 
