@@ -1,19 +1,25 @@
 name: triggers practice
-on: issue_comment
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+  issue_comment:
+    types: [created]
 
 jobs:
   pr_commented:
     name: PR comment
-    if: ${{ github.event.issue.pull_request }}
+    if: ${{ github.event_name == 'issue_comment' && github.event.issue.pull_request }}
     runs-on: ubuntu-latest
     steps:
       - run: |
-          echo A comment on PR $NUMBER
+          echo "A comment on PR $NUMBER"
         env:
           NUMBER: ${{ github.event.issue.number }}
 
   show-secrets:
     name: Show secrets
+    if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     steps:
       - name: Check secret presence
@@ -21,14 +27,15 @@ jobs:
           if [ -z "${{ secrets.API_KEY }}" ]; then
             echo ":x: No existe el secreto API_KEY"
           else
-            echo ":marca_de_verificación_blanca: El secreto API_KEY está presente"
+            echo ":white_check_mark: El secreto API_KEY está presente"
           fi
 
   notify-slack:
     name: Send Slack notification
+    if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Send message to Slack
+      - name: Check SLACK_WEBHOOK_URL
         run: |
           if [ -z "${{ secrets.SLACK_WEBHOOK_URL }}" ]; then
             echo ":x: No existe el secreto SLACK_WEBHOOK_URL"
@@ -36,13 +43,11 @@ jobs:
           fi
       - name: Send Slack Notification
         run: |
-          PR_NUMBER=${{ github.event.issue.number }}
-          PR_TITLE=${{ github.event.issue.title }}
-          PR_URL=${{ github.event.issue.html_url }}
-          AUTHOR=${{ github.event.issue.user.login }}
-          # Mensaje formateado para Slack
-          MESSAGE=":gorro_de_fiesta: *Nuevo PR abierto/actualizado por* *${AUTHOR}* \n>*#${PR_NUMBER}* - ${PR_TITLE}\n${PR_URL}"
-          # Enviar a Slack
+          PR_NUMBER=${{ github.event.number || github.event.issue.number }}
+          PR_TITLE=${{ github.event.pull_request.title || github.event.issue.title }}
+          PR_URL=${{ github.event.pull_request.html_url || github.event.issue.html_url }}
+          AUTHOR=${{ github.event.pull_request.user.login || github.event.issue.user.login }}
+          MESSAGE=":tada: *Nuevo PR abierto/actualizado por* *${AUTHOR}* \n>*#${PR_NUMBER}* - ${PR_TITLE}\n${PR_URL}"
           curl -X POST -H 'Content-type: application/json' \
             --data "{\"text\":\"$MESSAGE\"}" \
             ${{ secrets.SLACK_WEBHOOK_URL }}
