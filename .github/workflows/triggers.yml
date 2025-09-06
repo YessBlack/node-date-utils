@@ -44,10 +44,10 @@ jobs:
       - name: Send Slack Notification
         run: |
           PR_NUMBER=${{ github.event.number || github.event.issue.number }}
-          PR_TITLE=${{ github.event.pull_request.title || github.event.issue.title }}
+          PR_TITLE="${{ github.event.pull_request.title || github.event.issue.title }}"
           PR_URL=${{ github.event.pull_request.html_url || github.event.issue.html_url }}
           AUTHOR=${{ github.event.pull_request.user.login || github.event.issue.user.login }}
           MESSAGE=":tada: *Nuevo PR abierto/actualizado por* *${AUTHOR}* \n>*#${PR_NUMBER}* - ${PR_TITLE}\n${PR_URL}"
           curl -X POST -H 'Content-type: application/json' \
-            --data "{\"text\":\"$MESSAGE\"}" \
+            --data "{\"text\": \"${MESSAGE//\"/\\\"}\"}" \
             ${{ secrets.SLACK_WEBHOOK_URL }}
